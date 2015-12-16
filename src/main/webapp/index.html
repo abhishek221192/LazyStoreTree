@@ -1,0 +1,68 @@
+
+<!DOCTYPE HTML>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Demo: Connecting DataGrid to a Store</title>
+
+        <script type='text/javascript' src='https://ajax.googleapis.com/ajax/libs/dojo/1.10.4/dojo/dojo.js' djConfig="parseOnLoad: true"></script>
+
+        <link rel="stylesheet" type="text/css" href="http://ajax.googleapis.com/ajax/libs/dojo/1.10.4/dijit/themes/claro/claro.css">
+        <link rel="stylesheet" type="text/css" href="http://ajax.googleapis.com/ajax/libs/dojo/1.10.4/dijit/themes/tundra/tundra.css">
+        <link rel="stylesheet" type="text/css" href="http://ajax.googleapis.com/ajax/libs/dojo/1.10.4/dijit/themes/soria/soria.css">
+        <link rel="stylesheet" type="text/css" href="http://ajax.googleapis.com/ajax/libs/dojo/1.10.4/dijit/themes/nihilo/nihilo.css">
+
+        <script>
+            require([
+                "dojo/store/JsonRest",
+                "dijit/Tree",
+                "dijit/tree/ObjectStoreModel",
+                "dojo/domReady!"
+            ], function (JsonRest, Tree, ObjectStoreModel) {
+
+                // create store
+                var usGov = new JsonRest({
+                    target: "rest/tree/",
+                    getChildren: function (object) {
+                        // object may just be stub object, so get the full object first and then return it's
+                        // list of children
+                        return this.get(object.id).then(function (fullObject) {
+                            return fullObject.children;
+                        });
+                    }
+                });
+
+                // create model to interface Tree to store
+                var model = new ObjectStoreModel({
+                    store: usGov,
+                    getRoot: function (onItem) {
+                        this.store.get("root").then(onItem);
+                    },
+                    mayHaveChildren: function (object) {
+                        return object.children;
+                    }
+                });
+
+                var tree = new Tree({
+                    model: model,
+                    persist: false,
+                    showRoot: false,
+		
+                    getIconClass: function fileIconClass(item, nodeExpanded) {
+                        if (item.folder) {
+                            return (nodeExpanded ? "dijitFolderOpened" : "dijitFolderClosed");
+                        } else {
+                            return "dijitLeaf";
+                        }
+                    }
+                }, "tree"); // make sure you have a target HTML element with this id
+                tree.startup();
+            });
+        </script>
+    </head>
+    <body class="claro">
+        <h1>Demo: Connecting Tree to a Store</h1>
+        <div id="tree"></div>
+        <p><button id="add-new-child">Add new child to selected item</button></p>
+    </body>
+</html>
